@@ -1,0 +1,29 @@
+name: Publish Helm Chart
+on:
+  push:
+    branches:
+      - main
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    container:
+      image: alpine
+    steps:
+    - uses: actions/checkout@v2
+    - name: Lint
+      run: |
+        apk add bash curl openssl git
+        curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+        helm package flat-manager
+        NEW_VERSION="$(basename "$(ls | grep .tgz)" .tgz | awk -F'-' '{ print $NF }')"
+        mv ./*.tgz ./releases
+        helm repo index --url https://kgrubb.github.io/flat-manager-chart/ --merge index.yaml .
+        if git diff --quiet ; then
+          echo "Everything is up-to-date, nothing to commit."
+        else
+          echo "Committing new changes"
+          git add .
+          git commit -m "Publish release v"$NEW_VERSION"."
+          git push origin main
+          echo "Push complete!"
+        fi

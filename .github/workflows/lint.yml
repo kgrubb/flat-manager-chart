@@ -1,0 +1,14 @@
+name: Lint Helm Chart
+on: [push, pull_request]
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    container:
+      image: alpine
+    steps:
+    - uses: actions/checkout@v2
+    - name: Lint
+      run: |
+        apk add bash curl openssl
+        curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+        helm lint flat-manager/
